@@ -1,0 +1,55 @@
+/*test_style.css*/
+
+
+path {
+	
+	stroke-width: 1;
+	fill: none;
+}
+
+.type_0{
+	stroke: steelblue;
+}
+
+.type_1{
+	stroke: red;
+}
+
+.type_2{
+	stroke: green;
+}
+
+
+.axis {
+	shape-rendering: crispEdges;
+}
+.x.axis line {
+	stroke: lightgrey;
+}
+.x.axis .minor {
+	stroke-opacity: .5;
+}
+.x.axis path {
+	display: none;
+}
+.y.axis line, .y.axis path {
+	fill: none;
+	stroke: #000;
+}
+
+canvas{
+	width: 800px;
+	height: 600px;
+	border:solid 1px #000;
+	float:left;
+}
+
+#graph{
+	float:left;
+}
+
+#container{
+	width: 1500px;
+	height: 600px;
+
+}
