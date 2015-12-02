@@ -17,7 +17,7 @@ window.onload = function() {
 	tool.onMouseDown = function(event) {
 		stroke = new Stroke();
 		mouseDown = true;
-		
+
 	};
 
 	tool.onMouseDrag = function(event) {
@@ -34,14 +34,13 @@ window.onload = function() {
 	tool.onMouseUp = function(event) {
 		if (paper.Key.isDown('a')) {
 			scaffolds.push(stroke);
-			console.log('setting scaffold stroke',stroke);
+			//console.log('setting scaffold stroke',stroke);
 
-		}
-		else{
-			console.log('setting pressure stroke',stroke);
+		} else {
+			//console.log('setting pressure stroke',stroke);
 			stroke.parameterize();
 		}
-		
+
 		mouseDown = false;
 	};
 };
@@ -52,6 +51,92 @@ function getWacomPlugin() {
 
 function map_range(value, low1, high1, low2, high2) {
 	return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+}
+
+
+var LowPassFilter = function(filterFactor,gain, n_dimensions){
+	this.filterFactor = filterFactor;
+	this.gain = gain;
+	this.n_dimensions = n_dimensions;
+	this.processedData = [];
+	this.yy = [];
+	this.yy.length = n_dimensions;
+	for(var i=0;i<this.yy.length;i++){
+		this.yy[i]=0;
+	}
+};
+
+LowPassFilter.prototype.filter = function(x){
+ 	var y = this._filter([x]);
+ 	if(y.length===0){
+ 		return 0;
+ 	}
+ 	return y[0];
+};
+
+LowPassFilter.prototype._filter = function(x){
+	if(x.length !=this.n_dimensions){
+		console.log('the number of input dimensions does not match the input');
+		return;
+	}
+
+	for(var n=0; n<this.n_dimensions; n++){
+		console.log('this.yy',n,this.yy[n]);
+		 this.processedData[n] = ((this.yy[n] * this.filterFactor) + (1.0-this.filterFactor) * x[n])*this.gain;
+        this.yy[n] = this.processedData[n];
+    }
+    return this.processedData;
+};
+
+
+function calculateInflectionPoints(dataset) {
+	var der = [];
+	var inflections = [];
+	inflections.push(dataset[0]);
+	var count = 0;
+	for (var i = 1; i < dataset.length; i++) {
+		
+		var x_t = dataset[i].y;
+		var x_t_1 = dataset[i - 1].y;
+		var delta_t = dataset[i].x - dataset[i - 1].x;
+		var y_t = (x_t - x_t_1) / delta_t;
+		der.push(y_t);
+		if (i > 1) {
+			var y_t_1 = der[i - 2];
+			//console.log(y_t, y_t_1);
+			if (y_t == 0) {
+
+			} else {
+				if (y_t < 0 && y_t_1 >= 0) {
+					inflections.push(dataset[i]);
+									count =0;
+
+				} else if (y_t > 0 && y_t_1 <= 0) {
+					inflections.push(dataset[i]);
+									count =0;
+
+				}
+				else if(Math.abs(y_t)>0.1){
+					console.log('derivative exceeds',Math.abs(y_t));
+					inflections.push(dataset[i]);
+					count =0;
+
+				}
+
+			}
+
+			/*if(count>(dataset.length/10)){
+				inflections.push(dataset[i]);
+				count =0;
+
+			}*/
+			count++;
+		}
+	}
+	console.log('derivative length', der.length, "dataset length", dataset.length);
+	console.log('inflections', inflections);
+	inflections.push(dataset[dataset.length-1]);
+	return inflections;
 }
 
 var Stroke = function() {
@@ -80,7 +165,7 @@ Stroke.prototype.addDataPoint = function(pressure, delta, middlePoint) {
 	step = step.normalize();
 
 	step.angle += 90;
-		this.deltas.push(step);
+	this.deltas.push(step);
 	var step2 = step.clone().multiply(pressure * 10);
 	var top = middlePoint.add(step2);
 
@@ -89,7 +174,7 @@ Stroke.prototype.addDataPoint = function(pressure, delta, middlePoint) {
 		this.path.add(top);
 		this.path.insert(0, bottom);
 		this.path.smooth();
-		
+
 
 	} else {
 		this.path.noPressure = true;
@@ -113,61 +198,81 @@ Stroke.prototype.addPressurePoint = function(pressure) {
 
 
 Stroke.prototype.parameterize = function() {
-		this.strokeLength = this.spine.length;
-		this.path.simplify();
-		var pressure = this.getVals(this.pressure, null, 1);
-		console.log('pressure length', pressure.length, this.pressure.length);
-	
+	this.strokeLength = this.spine.length;
+	this.path.simplify();
+	var pressure = this.getVals(this.pressure, null, 1);
+	//console.log('pressure length', pressure.length, this.pressure.length);
 
-		var p_y = this.getVals(pressure, 'y');
 
-		//console.log('stroke length', this.strokeLength, 'point_num', this.points.length); // this.pressure_exp);
-		var datapoints = [];
-		var data = [];
-		var lagrange_data = [];
-		/*for(var i=0;i<p_y.length;i++){
-			var x=this.strokeLength/p_y.length*i;
-			var y = eval(expression);
-			console.log(x,',',y);
-			datapoints.push(y);
-		}*/
+	var p_y = this.getVals(pressure, 'y');
 
-		var sma3 = simple_moving_averager(3);
-		var sma5 = simple_moving_averager(10);
-		for (var i in pressure) {
-			var n = pressure[i].y;
-			// using WSH
-			//console.log('Next number = ' + n + ', SMA_3 = ' + sma3(n) + ', SMA_5 = ' + sma5(n));
-			data.push(sma5(n));
-			if (i % 10 == 0 || i == 0 || i == p_y.length - 1) {
-				datapoints.push({
-					x: pressure[i].x,
-					y: data[i]
-				});
-			}
+	//console.log('stroke length', this.strokeLength, 'point_num', this.points.length); // this.pressure_exp);
+	var datapoints = [];
+	var data = [];
+	var lagrange_data = [];
+	/*for(var i=0;i<p_y.length;i++){
+		var x=this.strokeLength/p_y.length*i;
+		var y = eval(expression);
+		console.log(x,',',y);
+		datapoints.push(y);
+	}*/
+
+	var sma3 = simple_moving_averager(3);
+	var sma5 = simple_moving_averager(10);
+	for (var i in pressure) {
+		var n = pressure[i].y;
+		// using WSH
+		//console.log('Next number = ' + n + ', SMA_3 = ' + sma3(n) + ', SMA_5 = ' + sma5(n));
+		data.push({
+			x: pressure[i].x,
+			y: sma5(n)
+		});
+		if (i % 10 == 0 || i == 0 || i == p_y.length - 1) {
+			datapoints.push({
+				x: pressure[i].x,
+				y: data[i]
+			});
 		}
-		//console.log('data', datapoints);
+	}
+	var lp_data = [];
+	var lpf = new LowPassFilter(0.90,1.00, 1);
+	for(var j in pressure){
+		var x = pressure[j].y;
+		var x_f = lpf.filter(x);
+		 lp_data.push({
+				x: pressure[j].x,
+				y: x_f
+			});
+	}
 
-		var polynomials = lagrange(datapoints);
-		var expression = polynomials[0];
-		for (var k = 1; k < polynomials.length; k++) {
-			expression = polynomials[k] + '*Math.pow(x,' + k + ')+' + expression;
-		}
-		this.expression = expression;
-		this.averaged_data = data;
 
 
-		for (var i = 0; i < p_y.length; i++) {
-			var x = pressure[i].x;
-			var y = eval(expression);
-			//console.log(x, ',', y);
-			lagrange_data.push({x:x,y:y});
-		}
-		graphData([pressure, datapoints, lagrange_data], this.spine.length);
-		for(var i=0;i<scaffolds.length;i++){
-			scaffolds[i].applyPressure(this);
-		}
-	
+	var inflections = calculateInflectionPoints(data);
+	//console.log('data', datapoints);
+
+	var polynomials = lagrange(inflections);
+	var expression = polynomials[0];
+	for (var k = 1; k < polynomials.length; k++) {
+		expression = polynomials[k] + '*Math.pow(x,' + k + ')+' + expression;
+	}
+	this.expression = expression;
+	this.averaged_data = data;
+
+
+	for (var i = 0; i < p_y.length; i++) {
+		var x = pressure[i].x;
+		var y = eval(expression);
+		//console.log(x, ',', y);
+		lagrange_data.push({
+			x: x,
+			y: y
+		});
+	}
+	graphData([pressure, data, lp_data], this.spine.length);
+	for (var i = 0; i < scaffolds.length; i++) {
+		scaffolds[i].applyPressure(this);
+	}
+
 
 };
 
@@ -202,7 +307,7 @@ Stroke.prototype.applyPressure = function(target) {
 		var top = step.add(step2);
 
 		var bottom = step.subtract(step2);
-		console.log(step,step2,top,bottom);
+		console.log(step, step2, top, bottom);
 		this.path.add(top.add(p));
 		this.path.insert(0, bottom.add(p));
 		this.path.smooth();
