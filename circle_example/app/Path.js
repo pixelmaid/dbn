@@ -1,10 +1,11 @@
-/*path.js*/
+/*Path.js*/
 'use strict';
 
 define(['paper'], function(paper) {
 	function Path() {
 		this.pressureData = [];
 		this.pathlength = 0;
+
 	}
 
 	Path.prototype.addDataPoint = function(pressure, point) {
@@ -16,13 +17,19 @@ define(['paper'], function(paper) {
 				brightness: 1
 			};
 			this.spine.strokeWidth = 2;
+			this.startPoint = point;
 		}
 		this.spine.add(point);
+		this.addPressurePoint(pressure);
+		this.endPoint = point;
+	};
+
+	Path.prototype.addPressurePoint = function(pressure){
 		this.pressureData.push({
 			x: this.spine.length,
 			y: pressure,
 		});
-	};
+	}
 
 	Path.prototype.clear = function(){
 		this.pressureData.length =0;

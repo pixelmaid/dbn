@@ -23,6 +23,7 @@ define([], function() {
 				var d1 = x - p1.x;
 				var d2 = p2.x - x;
 				a1 = d1 / dx;
+				a1 = d1 / dx;
 				a2 = d2 / dx;
 				break;
 			}
@@ -38,26 +39,23 @@ define([], function() {
 	};
 
 	SignalUtils.prototype.simple_moving_averager = function(period) {
-	var nums = [];
-	return function(num) {
-		nums.push(num);
-		if (nums.length > period){
-			nums.splice(0, 1); // remove the first element of the array
-		}
+		var nums = [];
+		return function(num) {
+			nums.push(num);
+			if (nums.length > period) {
+				nums.splice(0, 1); // remove the first element of the array
+			}
 			var sum = 0;
-		for (var i=0;i<nums.length;i++){
-			sum += nums[i];
-		}
-		var n = period;
-		if (nums.length < period){
-			n = nums.length;
-		}
-		return (sum / n);
+			for (var i = 0; i < nums.length; i++) {
+				sum += nums[i];
+			}
+			var n = period;
+			if (nums.length < period) {
+				n = nums.length;
+			}
+			return (sum / n);
+		};
 	};
-};
-
-
-
 
 	SignalUtils.prototype.calculateInflectionPoints = function(dataset) {
 		var der = [];
