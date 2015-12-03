@@ -42,6 +42,25 @@ define(['paper'], function(paper) {
 		}
 	};
 
+	Path.prototype.drawNormals = function() {
+		var segments = this.spine.segments;
+
+		for (var i = 0; i < segments.length; i++) {
+			//var offset = i / segments.length * length;
+			var point = segments[i].point;
+			var offset = this.spine.getOffsetOf(point);
+
+			// Find the normal vector on the path at the given offset
+			// and give it a length of 30:
+			var normal = this.spine.getNormalAt(offset).multiply(30);
+
+			var line = new paper.Path({
+				segments: [point, point.add(normal)],
+				strokeColor: 'red'
+			});
+		}
+	};
+
 	Path.prototype.snapTo = function(target, segment_index) {
 		var targetSegment;
 		if (segment_index == 'first') {
