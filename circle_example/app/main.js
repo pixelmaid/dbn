@@ -10,7 +10,8 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 	tool.minDistance = 2;
 	tool.maxDistance = 45;
 	var mouseDown, currentPath;
-
+	var lines = [];
+	var paths = [];
 	var mode = 'line';
 	// Define a mousedown and mousedrag handler
 	tool.onMouseDown = function(event) {
@@ -21,11 +22,21 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 			case 'line':
 				currentPath = new Line();
 				currentPath.addDataPoint(pressure, event.point);
+				lines.push(currentPath);
 				break;
 			case 'path':
 				currentPath = new Path();
+				paths.push(currentPath);
 				currentPath.addDataPoint(pressure, event.point);
 				break;
+
+			case 'constrain':
+				currentPath = new Path();
+				paths.push(currentPath);
+				currentPath.addDataPoint(pressure, event.point);
+				
+			break;
+
 
 		}
 	};
@@ -38,6 +49,7 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 					currentPath.setEndPoint(pressure, event.middlePoint);
 					break;
 				case 'path':
+				case 'constrain':
 
 					currentPath.addDataPoint(pressure, event.middlePoint);
 					break;
@@ -50,9 +62,22 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 
 	tool.onMouseUp = function() {
 		mouseDown = false;
+
 		if (currentPath) {
-			currentPath.simplify();
-			currentPath = null;
+									currentPath.simplify();
+
+			if(mode==='constrain'){
+				currentPath.snapTo(lines[0],'first');
+				currentPath.snapTo(lines[1],'last');
+
+			}
+
+						currentPath = null;
+
+			if(lines.length>1 && mode==='line'){
+				mode = 'constrain';
+			}
+
 		}
 
 	};
