@@ -3,22 +3,14 @@
 
 
 <head>
-<script type="text/javascript" src="../lib/paper.js"></script>
-<script type="text/javascript" src="../lib/jquery.js"></script>
-<script type="text/javascript" src="../lib/d3.min.js"></script>
-<script type="text/javascript" src="js/graph_script.js"></script>
-<script type="text/javascript" src="js/stroke_model.js"></script>
+
+	  <script data-main="app" src="../lib/require.js"></script>
+
 
 <link rel="stylesheet" href="css/test_style.css" type="text/css" media="screen" />
 </head>
 
 <body>
-	<script>
-	$( document ).ready(function() {
-		console.log('ready');
-
-	});
-	</script>
 	<div id = 'container'>
 <canvas id="myCanvas" resize></canvas>
 <div id="graph" class="aGraph"></div>
@@ -27,6 +19,5 @@
 
 <object id="wtPlugin" type="application/x-wacomtabletplugin">
 	<param name="onload" value="pluginLoaded" />
-
 </object>
 </html>

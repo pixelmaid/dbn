@@ -1,5 +1,7 @@
+define(["jquery","d3"],function ($,d3) {
+ return {
 // define dimensions of graph
-function graphData(d,sample_length) {
+graphData: function(d,sample_length) {
 	var m = [80, 80, 80, 80]; // margins
 	var w = 400 - m[1] - m[3]; // width
 	var h = 400 - m[0] - m[2]; // height
@@ -8,7 +10,8 @@ function graphData(d,sample_length) {
 
 	// X scale will fit all values from data[] within pixels 0-w
 	var x = d3.scale.linear().domain([0, sample_length]).range([0, w]);
-	// Y scale will fit values from 0-10 within pixels h-0 (Note the inverted domain for the y-scale: bigger is up!)
+	// Y scale will fit values from 0-10 within pixels h-0 (No
+	// te the inverted domain for the y-scale: bigger is up!)
 	var y = d3.scale.linear().domain([0, 1]).range([h, 0]);
 	// automatically determining max range can work something like this
 	// var y = d3.scale.linear().domain([0, d3.max(data)]).range([h, 0]);
@@ -66,3 +69,5 @@ function graphData(d,sample_length) {
 		drawLine(d[i],i);
 	}
 }
+};
+});
