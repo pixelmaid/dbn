@@ -1,7 +1,7 @@
 /*main.js*/
 'use strict';
 
-define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
+define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 
 	paper.install(window);
 	paper.setup('myCanvas');
@@ -16,22 +16,22 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 	// Define a mousedown and mousedrag handler
 	tool.onMouseDown = function(event) {
 		mouseDown = true;
-		var pressure = 0; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = 0.1; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 
 		switch (mode) {
 			case 'line':
 				currentPath = new Line();
-				currentPath.addDataPoint(pressure, event.point);
+				currentPath.addDataPoint(event.point);
 				lines.push(currentPath);
 				break;
-			case 'path':
-				currentPath = new Path();
+			case 'stroke':
+				currentPath = new Stroke();
 				paths.push(currentPath);
 				currentPath.addDataPoint(pressure, event.point);
 				break;
 
 			case 'constrain':
-				currentPath = new Path();
+				currentPath = new Stroke();
 				paths.push(currentPath);
 				currentPath.addDataPoint(pressure, event.point);
 
@@ -42,11 +42,11 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 	};
 
 	tool.onMouseDrag = function(event) {
-		var pressure = 0; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = 0.5; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 		if (currentPath) {
 			switch (mode) {
 				case 'line':
-					currentPath.setEndPoint(pressure, event.middlePoint);
+					currentPath.setEndPoint(event.middlePoint);
 					break;
 				case 'path':
 				case 'constrain':
@@ -55,8 +55,6 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 					break;
 			}
 		}
-		//var delta = event.delta;
-		//var pressure = getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 	};
 
 
@@ -176,10 +174,10 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 		}
 
 		for(var k=0;k<curve_segments.length;k++){
-			var p = new Path();
+			var p = new Stroke();
 			for(var l=0;l<curve_segments[k].length;l++){
 				
-				p.addDataPoint(0, curve_segments[k][l]);
+				p.addDataPoint(0.5, curve_segments[k][l]);
 			}
 		}
 

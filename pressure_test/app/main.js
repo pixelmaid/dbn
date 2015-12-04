@@ -51,35 +51,6 @@ function getWacomPlugin() {
 	return document.getElementById('wtPlugin');
 }
 
-function map_range(value, low1, high1, low2, high2) {
-	return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
-}
-
-function mapToSignal(p, spine_a, length_a, length_b, data) {
-	var d = spine_a.getOffsetOf(p);
-	var x = map_range(d, 0, length_a, 0, length_b);
-	var a1,a2,p1,p2;
-	for(var i=0;i<data.length-1;i++){
-		if(x>=data[i].x&&x<data[i+1].x){
-			p1 = data[i];
-			p2 = data[i+1];
-			var dx = p2.x-p1.x;
-			var d1 = x-p1.x;
-			var d2 = p2.x-x;
-			a1= d1/dx;
-			a2 = d2/dx;
-			break;
-		}
-	}
-	
-
-	if (!p2) {
-		return data[data.length-1].y;
-	}
-	var mapped_value = (a1) * p1.y + (a2) * p2.y;
-	//console.log('mapped val',mapped_value,'p1',p1.y,'p2',p2.y);
-	return mapped_value;
-}
 
 
 var LowPassFilter = function(filterFactor, gain, n_dimensions) {

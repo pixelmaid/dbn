@@ -10,13 +10,12 @@ define(['paper', 'app/Path'], function(paper, Path) {
 
 	Line.prototype.constructor = Line;
 
-	Line.prototype.setEndPoint = function(pressure, point) {
+	Line.prototype.setEndPoint = function(point) {
 		if(this.spine.segments.length>1){
 			this.spine.lastSegment.point = point;
-			this.addPressurePoint(pressure);
 		}
 		else{
-			this.addDataPoint(pressure,point);
+			this.addDataPoint(point);
 		}
 	};
 
