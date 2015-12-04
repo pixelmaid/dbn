@@ -22,7 +22,7 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 	// Define a mousedown and mousedrag handler
 	tool.onMouseDown = function(event) {
 		mouseDown = true;
-		var pressure = 0.2; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = 1//getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 
 		switch (mode) {
 			case 'line':
@@ -48,7 +48,7 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 	};
 
 	tool.onMouseDrag = function(event) {
-		var pressure = 0.5; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = 1//getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 		if (currentPath) {
 			switch (mode) {
 				case 'line':
@@ -187,9 +187,9 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 
 				curve_segments[j].splice(curve_segments[j].length - 1, 0, pg);
 				var pc = new paper.Path.Circle({
-					center: p,
+					center: pg,
 					radius: 3,
-					fillColor: 'gray'
+					fillColor: 'yellow'
 				});
 				targetLayer.addChild(pc);
 
@@ -200,13 +200,9 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 
 		for (var k = 1; k < curve_segments.length; k++) {
 			var p = new Stroke();
-			for (var l = 0; l < curve_segments[k].length; l += 3) {
-				if (l === 0 || l === curve_segments[k].length - 1) {
+			for (var l = 0; l < curve_segments[k].length; l ++) {
+			
 					p.addDataPoint(null, curve_segments[k][l]);
-
-				} else {
-					p.addDataPoint(null, new paper.Segment(curve_segments[k][l], curve_segments[k][l - 1], curve_segments[k][l + 1]));
-				}
 			}
 			p.mapPressure(curve);
 		}

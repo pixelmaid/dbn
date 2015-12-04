@@ -91,7 +91,7 @@ define(['paper', 'app/Path', 'app/LowPassFilter', 'app/SignalProcessUtils'], fun
 			var bottom = p.add(normal.multiply(pressure * -10));
 			this.stroke.add(top);
 			this.stroke.insert(0, bottom);
-			console.log('pressure=',pressure,'top',top,'bottom',bottom);
+			//console.log('pressure=',pressure,'top',top,'bottom',bottom);
 
 		}
 		this.stroke.smooth();
