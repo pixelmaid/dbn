@@ -16,7 +16,7 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 	// Define a mousedown and mousedrag handler
 	tool.onMouseDown = function(event) {
 		mouseDown = true;
-		var pressure = 0;//getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = 0; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 
 		switch (mode) {
 			case 'line':
@@ -42,7 +42,7 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 	};
 
 	tool.onMouseDrag = function(event) {
-		var pressure = 0;//getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = 0; //getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 		if (currentPath) {
 			switch (mode) {
 				case 'line':
@@ -69,8 +69,8 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 			if (mode === 'constrain') {
 				currentPath.snapTo(lines[0], 'first');
 				currentPath.snapTo(lines[1], 'last');
-				currentPath.drawNormals();
-				calculateAngles(lines[0], lines[1], currentPath);
+				//currentPath.drawNormals();
+				calculateAngles(lines[0], lines[1], currentPath, 10);
 			}
 
 			currentPath = null;
@@ -83,11 +83,16 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 
 	};
 
-	function calculateAngles(line1, line2, curve) {
+	function calculateAngles(line1, line2, curve, lineCount) {
+
 		var p1_1 = curve.spine.firstSegment.point;
-		var p1_2 = line1.endPoint;
+		var p1_2 = line1.spine.firstSegment.point
 		var p2_1 = curve.spine.lastSegment.point;
-		var p2_2 = line2.endPoint;
+		var p2_2 = line2.spine.firstSegment.point
+
+		var target_length=line1.spine.length-p1_2.getDistance(p1_1)<line2.spine.length-p2_2.getDistance(p2_1) ? line1.spine.length-p1_2.getDistance(p1_1): line2.spine.length-p2_2.getDistance(p2_1);
+		var spacing = target_length/lineCount;
+
 
 		var v1 = p2_1.subtract(p1_1).normalize();
 		var v2 = p2_2.subtract(p1_2).normalize();
@@ -104,7 +109,32 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 			strokeColor: 'black',
 			strokeWidth: 2
 
+
 		});
+		var curve_segments = [];
+		curve_segments.length = lineCount;
+		for (var j = 0; j < lineCount; j++) {		
+				if (!curve_segments[j]) {
+					curve_segments[j] = [];
+				}
+			var d1 = line1.spine.getPointAt(spacing * j+p1_2.getDistance(p1_1));
+			var d2 = line2.spine.getPointAt(spacing * j+p2_2.getDistance(p2_1));
+			new paper.Path.Circle({
+					center: d1,
+					radius: 3,
+					fillColor: 'orange'
+				});
+
+			new paper.Path.Circle({
+					center: d2,
+					radius: 3,
+					fillColor: 'orange'
+				});
+		curve_segments[j].push(d1);
+		curve_segments[j].push(d2);
+
+		}
+
 		for (var i = 1; i < curve.spine.segments.length - 1; i++) {
 			var seg = curve.spine.segments[i];
 			var c = new paper.Path.Circle({
@@ -132,7 +162,28 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 				strokeColor: 'blue'
 			});
 
+			for (var j = 0; j < lineCount; j++) {
+				var pg = line.getPointAt(spacing * j);
+				
+				curve_segments[j].splice(curve_segments[j].length-1,0,pg);
+				var pc = new paper.Path.Circle({
+					center: p,
+					radius: 3,
+					fillColor: 'gray'
+				});
+			}
+
 		}
+
+		for(var k=0;k<curve_segments.length;k++){
+			var p = new Path();
+			for(var l=0;l<curve_segments[k].length;l++){
+				
+				p.addDataPoint(0, curve_segments[k][l]);
+			}
+		}
+
+
 		new paper.Path.Circle({
 			center: p1_1,
 			radius: 3,
@@ -142,7 +193,7 @@ define(['paper', 'app/Path', 'app/Line'], function(paper, Path, Line) {
 		new paper.Path.Circle({
 			center: p2_1,
 			radius: 3,
-			fillColor: 'green'
+			fillColor: 'gray'
 		});
 		new paper.Path.Circle({
 			center: p1_2,
