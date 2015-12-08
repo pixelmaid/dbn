@@ -10,7 +10,7 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 	var ui_layer = new paper.Layer();
 	ui_layer.name = 'ui_layer';
 	geometry_layer.activate();
-	//ui_layer.visible = false;
+	ui_layer.visible = false;
 	// Create a simple drawing tool:
 	var tool = new paper.Tool();
 	tool.minDistance = 4;
@@ -22,7 +22,7 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 	// Define a mousedown and mousedrag handler
 	tool.onMouseDown = function(event) {
 		mouseDown = true;
-		var pressure = 1//getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 
 		switch (mode) {
 			case 'line':
@@ -48,7 +48,7 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 	};
 
 	tool.onMouseDrag = function(event) {
-		var pressure = 1//getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
+		var pressure = getWacomPlugin() ? getWacomPlugin().penAPI.pressure : 1.0;
 		if (currentPath) {
 			switch (mode) {
 				case 'line':
@@ -74,7 +74,7 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 				currentPath.snapTo(lines[0], 'first');
 				currentPath.snapTo(lines[1], 'last');
 				//currentPath.drawNormals();
-				calculateAngles(lines[0], lines[1], currentPath, 5);
+				calculateAngles(lines[0], lines[1], currentPath, 15);
 			}
 
 			currentPath = null;
@@ -149,61 +149,83 @@ define(['paper', 'app/Stroke', 'app/Line'], function(paper, Stroke, Line) {
 		for (var i = 1; i < curve.spine.segments.length - 1; i++) {
 
 			var seg = curve.spine.segments[i];
+			for (var m = 0; m < 3; m++) {
+				var segpoint;
+				switch(m){
+					case 0:
+					segpoint= seg.point;
+					break;
+					case 1: 
+					segpoint = seg.handleIn.add(seg.point);
+					break;
+					case 2:
+					segpoint = seg.handleOut.add(seg.point);
+					break;
+
+				}
+
+				
 
 
-			
-			var c = new paper.Path.Circle({
-				center: seg.point,
-				radius: 3,
-				fillColor: 'red'
-			});
-			targetLayer.addChild(c);
-
-			var nl = c_l.getNearestLocation(seg.point);
-			var nc = new paper.Path.Circle({
-				center: nl.point,
-				radius: 3,
-				fillColor: 'blue'
-			});
-			targetLayer.addChild(nc);
-
-			var n_d = nl.offset;
-			var average_angle = n_d / cdist * a2 + (cdist - n_d) / cdist * a1;
-			console.log('i', average_angle * (180 / Math.PI), a1 * (180 / Math.PI), a2 * (180 / Math.PI));
-			var v_i = seg.point.clone();
-			v_i.angleInRadians = average_angle;
-			v_i.normalize();
-			//v_i = v_i.multiply(-1);
-			v_i = v_i.normalize(line1.spine.length);
-
-			var line = new paper.Path({
-				segments: [seg.point, seg.point.add(v_i)],
-				strokeColor: 'blue'
-			});
-
-			targetLayer.addChild(line);
-			for (var j = 0; j < lineCount; j++) {
-				var pg = line.getPointAt(spacing * j);
-
-				curve_segments[j].splice(curve_segments[j].length - 1, 0, pg);
-				var pc = new paper.Path.Circle({
-					center: pg,
+				var c = new paper.Path.Circle({
+					center: segpoint,
 					radius: 3,
-					fillColor: 'yellow'
+					fillColor: 'red'
 				});
-				targetLayer.addChild(pc);
+				targetLayer.addChild(c);
 
+				var nl = c_l.getNearestLocation(segpoint);
+				var nc = new paper.Path.Circle({
+					center: nl.point,
+					radius: 3,
+					fillColor: 'blue'
+				});
+				targetLayer.addChild(nc);
+
+				var n_d = nl.offset;
+				var average_angle = n_d / cdist * a2 + (cdist - n_d) / cdist * a1;
+				console.log('i', average_angle * (180 / Math.PI), a1 * (180 / Math.PI), a2 * (180 / Math.PI));
+				var v_i = segpoint.clone();
+				v_i.angleInRadians = average_angle;
+				v_i.normalize();
+				//v_i = v_i.multiply(-1);
+				v_i = v_i.normalize(line1.spine.length);
+
+				var line = new paper.Path({
+					segments: [segpoint, segpoint.add(v_i)],
+					strokeColor: 'blue'
+				});
+
+				targetLayer.addChild(line);
+				for (var j = 0; j < lineCount; j++) {
+					var pg = line.getPointAt(spacing * j);
+
+					curve_segments[j].splice(curve_segments[j].length - 1, 0, pg);
+					var pc = new paper.Path.Circle({
+						center: pg,
+						radius: 3,
+						fillColor: 'yellow'
+					});
+					targetLayer.addChild(pc);
+
+				}
 			}
-
 
 		}
-
 		for (var k = 1; k < curve_segments.length; k++) {
 			var p = new Stroke();
-			for (var l = 0; l < curve_segments[k].length; l ++) {
+
+			p.addDataPoint(null, curve_segments[k][0]);
 			
-					p.addDataPoint(null, curve_segments[k][l]);
+			for (var l = 1; l < curve_segments[k].length-1; l+=3) {
+				console.log(l,curve_segments[k].length);
+				
+					var s = new paper.Segment(curve_segments[k][l],curve_segments[k][l+1].subtract(curve_segments[k][l]),curve_segments[k][l+2].subtract(curve_segments[k][l]));
+				p.addDataPoint(null, s);
+				
 			}
+			p.addDataPoint(null, curve_segments[k][curve_segments[k].length-1]);
+
 			p.mapPressure(curve);
 		}
 
