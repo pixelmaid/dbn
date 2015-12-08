@@ -7,14 +7,21 @@
 
 'use strict';
 
-define(['paper'], function(paper) {
+define(['paper', 'app/SignalProcessUtils'], function(paper, Utils) {
+	var pressure_constant = 1;
+	var targetLayer; 
 	function SStroke() {
-		//var prototype = new paper.Path.Ellipse(new paper.Point(0,0), new paper.Point(200,100));
-		var center = new paper.Point(40, 40);
+	targetLayer	= paper.project.layers.filter(function(layer) {
+			return layer.name === 'ui_layer';
+		})[0];
+	targetLayer.visible = false;
+		var prototype = new paper.Path.Ellipse(new paper.Point(0, 0), new paper.Point(200, 10));
+		var center = new paper.Point(200, 50);
 		var points = 5;
-		var radius1 =10;
-		var radius2 = 40;
-		var prototype = new paper.Path.Star(center, points, radius1, radius2);
+		var radius1 = 50;
+		var radius2 = 200;
+		//var prototype = new paper.Path.Star(center, points, radius1, radius2);
+		//prototype.scale(1,0.2);
 		prototype.strokeColor = 'black';
 		prototype.fillColor = 'gray';
 		prototype.fullySelected = true;
@@ -30,24 +37,38 @@ define(['paper'], function(paper) {
 		spine.strokeWeight = 2;
 		this.res = 1;
 		var num_ribs = Math.round(spine.length / this.res) + 1;
-		console.log('num_ribs', num_ribs);
+		targetLayer.addChild(spine);
+	
+		//console.log('num_ribs', num_ribs);
 		this.ribs = [];
 		for (var i = 0; i < num_ribs; i++) {
 			var point = spine.getPointAt(i * this.res);
 			var normal = spine.getNormalAt(i * this.res);
 			var rib = new paper.Path(normal.multiply(this.reference_thickness / 2), normal.multiply(-this.reference_thickness / 2));
 			rib.translate(point);
-			//rib.strokeColor = 'red';
+			var s = new paper.Path.Circle(rib.firstSegment.point, 2);
+			s.fillColor = 'green';
+			var e = new paper.Path.Circle(rib.lastSegment.point, 2);
+			e.fillColor = 'red';
+			rib.strokeColor = 'red';
+			targetLayer.addChild(s);
+			targetLayer.addChild(e);
+			targetLayer.addChild(rib);
 			var intersections = rib.getIntersections(prototype);
 
 
 			for (var j = 0; j < intersections.length; j++) {
 				intersections[j].point.offset = prototype.getOffsetOf(intersections[j].point);
-								console.log('intersections',intersections[j].point,intersections[j].point.offset,j);
+				//console.log('intersections', intersections[j].point, intersections[j].point.offset, j);
 
 				var is = new paper.Path.Circle(intersections[j].point, 2);
-				is.fillColor = 'green';
+				if (j === 0) {
+					is.fillColor = 'orange';
+				} else {
+					is.fillColor = 'blue';
+				}
 			}
+			targetLayer.addChild(is);
 			this.ribs.push({
 				r: rib,
 				is: intersections,
@@ -60,17 +81,26 @@ define(['paper'], function(paper) {
 	}
 
 	SStroke.prototype.distort = function(path) {
+		var utils = new Utils();
 		var num_ribs = Math.round(this.spine.length / this.res) + 1;
 		var path_ribs = [];
 		var distortion = new paper.Path();
 		distortion.fillColor = 'black';
-		distortion.fullySelected= true;
+
 		for (var i = 0; i < num_ribs; i++) {
 			var point = path.getPointAt(i * (path.length / (num_ribs - 1)));
 			var normal = path.getNormalAt(i * (path.length / (num_ribs - 1)));
 			var rib = new paper.Path(normal.multiply(this.reference_thickness / 2), normal.multiply(-this.reference_thickness / 2));
 			rib.translate(point);
-			//rib.strokeColor = 'red';
+			rib.strokeColor = 'red';
+				targetLayer.addChild(rib)
+
+			var s = new paper.Path.Circle(rib.firstSegment.point, 2);
+			s.fillColor = 'green';
+			var e = new paper.Path.Circle(rib.lastSegment.point, 2);
+			e.fillColor = 'red';
+			targetLayer.addChild(s);
+			targetLayer.addChild(e);
 			path_ribs.push({
 				r: rib,
 				n: normal,
@@ -81,21 +111,43 @@ define(['paper'], function(paper) {
 		var distorted_points = [];
 		for (var j = 0; j < this.ribs.length; j++) {
 			var is = this.ribs[j].is;
-			var normal = this.ribs[j].n;
+			var proto_normal = this.ribs[j].n;
+			var signal = Math.sin(j/10)+2;
+			console.log(signal);
+			
 			for (var k = 0; k < is.length; k++) {
 				var ip = is[k].point;
-				var dist = this.ribs[j].p.y - ip.y;
-				var p_normal = normal.project(path_ribs[j].n).multiply(dist);
-				var p_point = p_normal.add(path_ribs[j].p);
 
-				//var p = new paper.Path.Circle(p_point, 2);
-				//p.fillColor = 'orange';
+				var dist = this.ribs[j].p.y - ip.y;
+				var p_normal = proto_normal.project(path_ribs[j].n);
+				var p_angle = utils.cartToPolar({
+					x: 0,
+					y: 0
+				}, p_normal);
+				var q = p_angle.type;
+
+				//if (k === 0) {
+				//console.log(j, k, 'p_angle=', p_angle.theta * 180 / Math.PI, p_angle.type, p_normal.angle, p_normal);
+
+				//console.log(j,'dist:',dist,'p_normal:',p_normal,'angle',p_normal.angle,'||',p_angle,'proto_normal:',proto_normal,'path_normal:',path_ribs[j].n);
+				//}
+				var s_normal = p_normal.normalize();
+
+				s_normal = s_normal.multiply(dist).multiply(signal);
+				var p_point = s_normal.add(path_ribs[j].p);
+
+				var p = new paper.Path.Circle(p_point, 2);
+				targetLayer.addChild(p);
+				if (k === 0) {
+					p.fillColor = 'orange';
+				} else {
+					p.fillColor = 'blue';
+				}
 				p_point.offset = ip.offset;
 				distorted_points.push(p_point);
 
 			}
 
-			//for(var k=0;l)
 		}
 
 		distorted_points.sort(function(a, b) {
@@ -108,11 +160,12 @@ define(['paper'], function(paper) {
 
 		for (var m = 0; m < distorted_points.length; m++) {
 			distortion.add(distorted_points[m]);
-			console.log('distorted_points', m, distorted_points.offset);
+			//	console.log('distorted_points', m, distorted_points.offset);
 		}
 		distortion.simplify();
 		distortion.sendToBack();
-
+		distortion.opacity = 0.5;
+		//distortion.fullySelected = true;
 
 
 	};

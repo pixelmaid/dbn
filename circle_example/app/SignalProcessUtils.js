@@ -10,6 +10,77 @@ define([], function() {
 		return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
 	};
 
+	SignalUtils.prototype.cartToPolar = function(p1, p2) {
+
+			var r = 0;
+			var theta = 0;
+			var x = p2.x - p1.x;
+			var y = p2.y - p1.y;
+			r = Math.sqrt((x * x) + (y * y));
+
+			var type = 0;
+			if (x > 0 && y >= 0) {
+				type = 1;
+			}
+			if (x > 0 && y < 0) {
+				type = 2;
+			}
+			if (x < 0) {
+				type = 3;
+			}
+			if (x === 0 && y > 0) {
+				type = 4;
+			}
+			if (x === 0 && y < 0) {
+				type = 5;
+			}
+			if (x === 0 && y === 0) {
+				type = 6;
+			}
+
+			//Find theta
+			switch (type) {
+				case (1):
+					theta = Math.atan(y / x);
+					break;
+				case (2):
+					theta = (Math.atan(y / x) + 2 * Math.PI);
+					break;
+				case (3):
+					theta = (Math.atan(y / x) + Math.PI);
+					break;
+				case (4):
+					theta = (Math.PI / 2.0);
+					break;
+				case (5):
+					theta = ((3 * Math.PI) / 2.0);
+					break;
+				case (6):
+					theta = 0.0;
+					break;
+				default:
+					theta = 0.0;
+					break;
+			}
+
+			return {
+				rad: r,
+				theta: theta
+			};
+
+		};
+
+		SignalUtils.prototype.polarToCart = function(r, theta) {
+			var x = Math.cos(theta * (Math.PI / 180.0)) * r;
+			var y = Math.sin(theta * (Math.PI / 180.0)) * r;
+
+
+			return {
+				x: x,
+				y: y
+			};
+		};
+
 
 	SignalUtils.prototype.mapToSignal = function(p, spine_a, length_a, length_b, data) {
 		var d = spine_a.getOffsetOf(p);
