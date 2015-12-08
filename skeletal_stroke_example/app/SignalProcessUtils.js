@@ -155,7 +155,7 @@ SignalUtils.prototype.cartToPolar = function(p1, p2) {
 						count = 0;
 
 					} else if (Math.abs(y_t) > 0.1) {
-						console.log('derivative exceeds', Math.abs(y_t));
+						//console.log('derivative exceeds', Math.abs(y_t));
 						inflections.push(dataset[i]);
 						count = 0;
 

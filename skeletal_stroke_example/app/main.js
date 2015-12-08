@@ -1,7 +1,7 @@
 /*main.js*/
 'use strict';
 
-define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke'], function(paper, SStroke, Line, Path, Stroke) {
+define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke', 'app/SignalProcessUtils'], function(paper, SStroke, Line, Path, Stroke, Utils) {
 
 	paper.install(window);
 	paper.setup('myCanvas');
@@ -19,10 +19,10 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke'], function(
 	var lines = [];
 	var paths = [];
 	var mode = 'path';
-
+	var first = true;
 	var sstroke = new SStroke();
 
-
+	var utils = new Utils();
 	// Define a mousedown and mousedrag handler
 	tool.onMouseDown = function(event) {
 		mouseDown = true;
@@ -87,7 +87,14 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke'], function(
 				currentPath.snapTo(lines[1], 'last');
 				//currentPath.drawNormals();
 			}
-						sstroke.distort(currentPath.spine);
+			if(first){
+				sstroke = sstroke.distort(currentPath.spine);
+			}
+			else{
+				sstroke.distort(currentPath.spine);
+
+			}
+			//jitterPath(currentPath);
 
 
 			currentPath = null;
@@ -97,8 +104,32 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke'], function(
 			}*/
 
 		}
+		//first = false;
 
 	};
+
+	function jitterPath(path) {
+		
+		//clone.visible=false;
+		clone.strokeColor = 'red';
+		clone.fullySelected = true;
+		var datapoints = clone.segments.map(function(seg) {
+			return {
+				x: seg.point.x,
+				y: seg.point.y
+			};
+		});
+		console.log('datapoints', datapoints);
+
+		var inflectionPoints = utils.calculateInflectionPoints(datapoints);
+		console.log('datapoints', datapoints.length, 'inflections', inflectionPoints.length);
+		for (var i = 0; i < inflectionPoints.length; i++) {
+			var s = inflectionPoints[i];
+			var p = new paper.Path.Circle(new paper.Point(s.x, s.y), 1000);
+			p.fill = 'green';
+			console.log(s.x, s.y, p.position, p.visible, p.bounds);
+		}
+	}
 
 
 

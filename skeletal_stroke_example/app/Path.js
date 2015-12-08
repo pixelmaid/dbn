@@ -3,6 +3,7 @@
 
 define(['paper'], function(paper) {
 	function Path() {
+			
 		this.pathlength = 0;
 
 	}
@@ -20,6 +21,53 @@ define(['paper'], function(paper) {
 		}
 		this.spine.add(point);
 		this.endPoint = point;
+	};
+
+	Path.prototype.createRibs = function(spine,prototype,reference_thickness,res){
+		var targetLayer	= paper.project.layers.filter(function(layer) {
+			return layer.name === 'ui_layer';
+		})[0];
+		var ribs = [];
+		var num_ribs = Math.floor(spine.length / res) + 1;
+		for (var i = 0; i < num_ribs; i++) {
+
+			var point = spine.getPointAt(i * res);
+			var normal = spine.getNormalAt(i * res);
+			var rib = new paper.Path(normal.multiply(reference_thickness / 2), normal.multiply(-reference_thickness / 2));
+			rib.translate(point);
+			var s = new paper.Path.Circle(rib.firstSegment.point, 2);
+			s.fillColor = 'green';
+			var e = new paper.Path.Circle(rib.lastSegment.point, 2);
+			e.fillColor = 'blue';
+			rib.strokeColor = 'red';
+			targetLayer.addChild(s);
+			targetLayer.addChild(e);
+			targetLayer.addChild(rib);
+			var intersections = rib.getIntersections(prototype);
+
+
+			for (var j = 0; j < intersections.length; j++) {
+				intersections[j].point.offset = prototype.getOffsetOf(intersections[j].point);
+				//console.log('intersections', intersections[j].point, intersections[j].point.offset, j);
+
+				var is = new paper.Path.Circle(intersections[j].point, 2);
+				if (j === 0) {
+					is.fillColor = 'orange';
+				} else {
+					is.fillColor = 'blue';
+				}
+			targetLayer.addChild(is);
+
+			}
+		ribs.push({
+				r: rib,
+				is: intersections,
+				n: normal,
+				p: point
+			});
+
+		}
+		return ribs;
 	};
 
 
