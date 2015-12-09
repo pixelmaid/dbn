@@ -91,11 +91,7 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke', 'app/Signa
 			var s2 = sstroke.distort(currentPath.spine);
 			var pathStroke = new SStroke(currentPath.spine);
 
-			for (var i = 0; i < 5; i++) {
-				var data = jitterPath(pathStroke, s2);
-				pathStroke = data.ps;
-				s2 = data.s2;
-			}
+			jitterPath(pathStroke, sstroke, 10);
 
 
 			currentPath = null;
@@ -109,7 +105,7 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke', 'app/Signa
 
 	};
 
-	function jitterPath(stroke, distort_target) {
+	function jitterPath(stroke, distort_target, count) {
 		var ribs = stroke.createRibs(stroke.spine, stroke.proto, stroke.reference_thickness, stroke.res);
 
 
@@ -123,8 +119,11 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke', 'app/Signa
 
 		var inflectionPoints = utils.calculateInflectionPoints(datapoints);
 		var clone_spine = new paper.Path();
+		ui_layer.addChild(clone_spine);
 		clone_spine.strokeColor = 'red';
 		clone_spine.bringToFront();
+		var underLine = [];
+		var overLine = [];
 		for (var i = 0; i < inflectionPoints.length; i++) {
 			var s = inflectionPoints[i];
 
@@ -133,26 +132,75 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke', 'app/Signa
 			var l = new paper.Path.Line(new paper.Point(s.x, s.y - 1000), new paper.Point(s.x, s.y + 1000));
 			l.strokeColor = 'green';
 			var intersect = l.getIntersections(stroke.spine)[0].point;
-
+			console.log(i,'s.y',s.y,'i.y',intersect.y);
+			if (s.y > intersect.y) {
+				underLine.push(i);
+				console.log("under");
+			} else {
+				overLine.push(i);
+				console.log("over");
+			}
 			var p2_2 = new paper.Path.Circle(intersect, 3);
 			p2_2.fillColor = 'orange';
-			if (i !== 0 && i != inflectionPoints.length - 1) {
-				if (i % 2 === 0) {
-					intersect.y += 50;
-				} else {
-					intersect.y -= 50;
-				}
-			}
+
 			clone_spine.add(intersect);
 
 
 		}
-		clone_spine.smooth();
-		var distort = distort_target.distort(clone_spine);
-		return {
-			ps: new SStroke(clone_spine),
-			s2: distort
-		};
+		for (var j = 1; j < count-1; j++) {
+			var dup = clone_spine.clone();
+		ui_layer.addChild(dup);
+
+			for (var k = 0; k < dup.segments.length; k++) {
+				if (overLine.indexOf(k)!=-1) {
+					console.log('over found',k);
+					if (k !== 0 && k != dup.segments.length - 1) {
+						dup.segments[k].point.y -= 50 * j;
+						
+					}
+				}
+				else{
+					if (k !== 0 && k != dup.segments.length - 1) {
+						dup.segments[k].point.y += 25 * j;
+						
+					}
+				}
+			}
+
+			dup.smooth();
+			var d1 = distort_target.distort(dup);
+			d1.proto.translate(0, -50 * j);
+			d1.spine.translate(0, -50 * j);
+
+			var dup2 = clone_spine.clone();
+					ui_layer.addChild(dup2);
+
+			for (var m = 0; m < dup2.segments.length; m++) {
+				if (underLine.indexOf(m)!=-1) {
+										console.log('under found',m);
+
+					if (m !== 0 && m != dup2.segments.length - 1) {
+						
+							dup2.segments[m].point.y += 50 * j;
+						
+					}
+				}
+				else{
+					if (m !== 0 && m != dup2.segments.length - 1) {
+						
+							//dup2.segments[m].point.y += 50 * j;
+						
+					}
+				}
+			}
+
+			dup2.smooth();
+			var d2 = distort_target.distort(dup2);
+			d2.proto.fillColor='blue';
+			d2.proto.translate(0, 50 * j);
+			d2.spine.translate(0, 50 * j);
+		}
+
 	}
 
 

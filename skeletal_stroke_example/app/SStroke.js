@@ -43,22 +43,22 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 			brightness: 1
 		};
 		spine.strokeWidth = 3;
-		this.res = 1;
+		this.res = 5;
 
 		this.ribs = this.createRibs(spine, prototype, this.reference_thickness, this.res);
 
 		targetLayer.addChild(spine);
 		this.spine = spine;
-		this.proto= prototype;
+		this.proto = prototype;
 	}
 
 
-   SStroke.prototype = new Path();
-   SStroke.prototype.constructor = SStroke;
+	SStroke.prototype = new Path();
+	SStroke.prototype.constructor = SStroke;
 
-   SStroke.prototype.hide = function(){
-		this.spine.visible=false;
-		this.proto.visible=false;
+	SStroke.prototype.hide = function() {
+		this.spine.visible = false;
+		this.proto.visible = false;
 	};
 
 
@@ -72,23 +72,23 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 		for (var i = 0; i < num_ribs; i++) {
 			var point = path.getPointAt(i * (path.length / (num_ribs - 1)));
 			var normal = path.getNormalAt(i * (path.length / (num_ribs - 1)));
-			if(normal){
-			var rib = new paper.Path(normal.multiply(this.reference_thickness / 2), normal.multiply(-this.reference_thickness / 2));
-			rib.translate(point);
-			rib.strokeColor = 'red';
-			targetLayer.addChild(rib);
+			if (normal) {
+				var rib = new paper.Path(normal.multiply(this.reference_thickness / 2), normal.multiply(-this.reference_thickness / 2));
+				rib.translate(point);
+				rib.strokeColor = 'red';
+				targetLayer.addChild(rib);
 
-			var s = new paper.Path.Circle(rib.firstSegment.point, 2);
-			s.fillColor = 'green';
-			var e = new paper.Path.Circle(rib.lastSegment.point, 2);
-			e.fillColor = 'red';
-			targetLayer.addChild(s);
-			targetLayer.addChild(e);
-			path_ribs.push({
-				r: rib,
-				n: normal,
-				p: point
-			});
+				var s = new paper.Path.Circle(rib.firstSegment.point, 2);
+				s.fillColor = 'green';
+				var e = new paper.Path.Circle(rib.lastSegment.point, 2);
+				e.fillColor = 'red';
+				targetLayer.addChild(s);
+				targetLayer.addChild(e);
+				path_ribs.push({
+					r: rib,
+					n: normal,
+					p: point
+				});
 			}
 
 		}
@@ -98,38 +98,39 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 			var is = this.ribs[j].is;
 			var proto_normal = this.ribs[j].n;
 			//var signal = Math.sin(j / 10) + 2;
+			if (path_ribs[j]) {
+				for (var k = 0; k < is.length; k++) {
+					var ip = is[k].point;
 
-			for (var k = 0; k < is.length; k++) {
-				var ip = is[k].point;
+					var dist = this.ribs[j].p.y - ip.y;
+					var p_normal = proto_normal.project(path_ribs[j].n);
+					var p_angle = utils.cartToPolar({
+						x: 0,
+						y: 0
+					}, p_normal);
+					//var q = p_angle.type;
 
-				var dist = this.ribs[j].p.y - ip.y;
-				var p_normal = proto_normal.project(path_ribs[j].n);
-				var p_angle = utils.cartToPolar({
-					x: 0,
-					y: 0
-				}, p_normal);
-				//var q = p_angle.type;
+					//if (k === 0) {
+					//console.log(j, k, 'p_angle=', p_angle.theta * 180 / Math.PI, p_angle.type, p_normal.angle, p_normal);
 
-				//if (k === 0) {
-				//console.log(j, k, 'p_angle=', p_angle.theta * 180 / Math.PI, p_angle.type, p_normal.angle, p_normal);
+					//console.log(j,'dist:',dist,'p_normal:',p_normal,'angle',p_normal.angle,'||',p_angle,'proto_normal:',proto_normal,'path_normal:',path_ribs[j].n);
+					//}
+					var s_normal = p_normal.normalize();
 
-				//console.log(j,'dist:',dist,'p_normal:',p_normal,'angle',p_normal.angle,'||',p_angle,'proto_normal:',proto_normal,'path_normal:',path_ribs[j].n);
-				//}
-				var s_normal = p_normal.normalize();
+					s_normal = s_normal.multiply(dist);
+					var p_point = s_normal.add(path_ribs[j].p);
 
-				s_normal = s_normal.multiply(dist);
-				var p_point = s_normal.add(path_ribs[j].p);
+					var p = new paper.Path.Circle(p_point, 2);
+					targetLayer.addChild(p);
+					if (k === 0) {
+						p.fillColor = 'orange';
+					} else {
+						p.fillColor = 'blue';
+					}
+					p_point.offset = ip.offset;
+					distorted_points.push(p_point);
 
-				var p = new paper.Path.Circle(p_point, 2);
-				targetLayer.addChild(p);
-				if (k === 0) {
-					p.fillColor = 'orange';
-				} else {
-					p.fillColor = 'blue';
 				}
-				p_point.offset = ip.offset;
-				distorted_points.push(p_point);
-
 			}
 
 		}
