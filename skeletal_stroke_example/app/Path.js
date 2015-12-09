@@ -12,7 +12,7 @@ define(['paper'], function(paper) {
 		if (!this.spine) {
 			this.spine = new paper.Path();
 			this.spine.strokeColor = {
-				hue: 206,
+				hue: 150,
 				saturation: 0.72,
 				brightness: 1
 			};

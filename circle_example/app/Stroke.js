@@ -98,6 +98,10 @@ define(['paper', 'app/Path', 'app/LowPassFilter', 'app/SignalProcessUtils'], fun
 		this.stroke.simplify();
 	};
 
+	SStroke.prototype.hide = function(){
+		this.spine.visible=false;
+		this.proto.visible=false;
+	}
 
 
 	Stroke.prototype.clear = function() {

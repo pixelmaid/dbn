@@ -132,7 +132,6 @@ define([], function() {
 		var der = [];
 		var inflections = [];
 		inflections.push(dataset[0]);
-		var count = 0;
 		for (var i = 1; i < dataset.length; i++) {
 			var x_t = dataset[i].y;
 			var x_t_1 = dataset[i - 1].y;
@@ -146,18 +145,11 @@ define([], function() {
 				} else {
 					if (y_t < 0 && y_t_1 >= 0) {
 						inflections.push(dataset[i]);
-						count = 0;
 
 					} else if (y_t > 0 && y_t_1 <= 0) {
 						inflections.push(dataset[i]);
-						count = 0;
 
-					} else if (Math.abs(y_t) > 0.1) {
-						console.log('derivative exceeds', Math.abs(y_t));
-						inflections.push(dataset[i]);
-						count = 0;
-
-					}
+					} 
 
 				}
 

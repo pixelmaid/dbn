@@ -87,14 +87,15 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke', 'app/Signa
 				currentPath.snapTo(lines[1], 'last');
 				//currentPath.drawNormals();
 			}
-			if(first){
-				sstroke = sstroke.distort(currentPath.spine);
-			}
-			else{
-				sstroke.distort(currentPath.spine);
 
+			var s2 = sstroke.distort(currentPath.spine);
+			var pathStroke = new SStroke(currentPath.spine);
+
+			for (var i = 0; i < 5; i++) {
+				var data = jitterPath(pathStroke, s2);
+				pathStroke = data.ps;
+				s2 = data.s2;
 			}
-			//jitterPath(currentPath);
 
 
 			currentPath = null;
@@ -108,27 +109,50 @@ define(['paper', 'app/SStroke', 'app/Line', 'app/Path', 'app/Stroke', 'app/Signa
 
 	};
 
-	function jitterPath(path) {
-		
-		//clone.visible=false;
-		clone.strokeColor = 'red';
-		clone.fullySelected = true;
-		var datapoints = clone.segments.map(function(seg) {
+	function jitterPath(stroke, distort_target) {
+		var ribs = stroke.createRibs(stroke.spine, stroke.proto, stroke.reference_thickness, stroke.res);
+
+
+
+		var datapoints = ribs.map(function(r) {
 			return {
-				x: seg.point.x,
-				y: seg.point.y
+				x: r.is[0].point.x,
+				y: r.is[0].point.y
 			};
 		});
-		console.log('datapoints', datapoints);
 
 		var inflectionPoints = utils.calculateInflectionPoints(datapoints);
-		console.log('datapoints', datapoints.length, 'inflections', inflectionPoints.length);
+		var clone_spine = new paper.Path();
+		clone_spine.strokeColor = 'red';
+		clone_spine.bringToFront();
 		for (var i = 0; i < inflectionPoints.length; i++) {
 			var s = inflectionPoints[i];
-			var p = new paper.Path.Circle(new paper.Point(s.x, s.y), 1000);
-			p.fill = 'green';
-			console.log(s.x, s.y, p.position, p.visible, p.bounds);
+
+			var p = new paper.Path.Circle(new paper.Point(s.x, s.y), 3);
+			p.fillColor = 'green';
+			var l = new paper.Path.Line(new paper.Point(s.x, s.y - 1000), new paper.Point(s.x, s.y + 1000));
+			l.strokeColor = 'green';
+			var intersect = l.getIntersections(stroke.spine)[0].point;
+
+			var p2_2 = new paper.Path.Circle(intersect, 3);
+			p2_2.fillColor = 'orange';
+			if (i !== 0 && i != inflectionPoints.length - 1) {
+				if (i % 2 === 0) {
+					intersect.y += 50;
+				} else {
+					intersect.y -= 50;
+				}
+			}
+			clone_spine.add(intersect);
+
+
 		}
+		clone_spine.smooth();
+		var distort = distort_target.distort(clone_spine);
+		return {
+			ps: new SStroke(clone_spine),
+			s2: distort
+		};
 	}
 
 

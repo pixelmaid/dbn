@@ -17,7 +17,7 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 		})[0];
 		if (!prototype) {
 
-			prototype = new paper.Path.Ellipse(new paper.Point(0, 0), new paper.Point(200, 100));
+			prototype = new paper.Path.Rectangle(new paper.Point(0, 0), new paper.Point(200, 10));
 
 			var center = new paper.Point(200, 50);
 			var points = 5;
@@ -29,6 +29,7 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 			prototype.fillColor = 'black';
 			prototype.fullySelected = true;
 		}
+
 		this.reference_thickness = prototype.bounds.height;
 
 		if (!spine) {
@@ -41,19 +42,25 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 			saturation: 0.72,
 			brightness: 1
 		};
-		spine.strokeWeight = 2;
-		this.res = 10;
+		spine.strokeWidth = 3;
+		this.res = 1;
 
 		this.ribs = this.createRibs(spine, prototype, this.reference_thickness, this.res);
 
 		targetLayer.addChild(spine);
-
-
 		this.spine = spine;
+		this.proto= prototype;
 	}
 
+
    SStroke.prototype = new Path();
-   	SStroke.prototype.constructor = SStroke;
+   SStroke.prototype.constructor = SStroke;
+
+   SStroke.prototype.hide = function(){
+		this.spine.visible=false;
+		this.proto.visible=false;
+	};
+
 
 	SStroke.prototype.distort = function(path) {
 		var utils = new Utils();
@@ -65,6 +72,7 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 		for (var i = 0; i < num_ribs; i++) {
 			var point = path.getPointAt(i * (path.length / (num_ribs - 1)));
 			var normal = path.getNormalAt(i * (path.length / (num_ribs - 1)));
+			if(normal){
 			var rib = new paper.Path(normal.multiply(this.reference_thickness / 2), normal.multiply(-this.reference_thickness / 2));
 			rib.translate(point);
 			rib.strokeColor = 'red';
@@ -81,9 +89,10 @@ define(['paper', 'app/SignalProcessUtils', 'app/Path'], function(paper, Utils, P
 				n: normal,
 				p: point
 			});
-			this.ribs[i].r.remove();
+			}
 
 		}
+
 		var distorted_points = [];
 		for (var j = 0; j < this.ribs.length; j++) {
 			var is = this.ribs[j].is;
